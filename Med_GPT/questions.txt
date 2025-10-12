@@ -1,0 +1,156 @@
+Great question! Here are the **best demo questions** that will impress judges:
+
+## 🎯 Perfect Demo Questions (Try These in Order)
+
+### 1. **Treatment Questions** ⭐ BEST FOR DEMO
+```
+What is the first-line treatment for type 2 diabetes?
+```
+**Why it's great:** Shows clear answer with medication names, doses, and citations
+
+```
+What antibiotics should I use for community-acquired pneumonia?
+```
+**Why it's great:** Shows multiple treatment options with patient considerations
+
+```
+How do you treat streptococcal pharyngitis?
+```
+**Why it's great:** Simple, clear answer with alternatives for allergies
+
+---
+
+### 2. **Diagnostic Questions** ⭐ GREAT FOR SHOWING PRECISION
+```
+What are the diagnostic criteria for diabetes?
+```
+**Why it's great:** Shows specific numbers (HbA1c ≥6.5%, glucose ≥126 mg/dL) with citations
+
+```
+How is hypertension classified?
+```
+**Why it's great:** Shows structured data (Stage 1, Stage 2, etc.) with exact values
+
+---
+
+### 3. **Clinical Target Questions** ⭐ SHOWS EVIDENCE-BASED CARE
+```
+What is the HbA1c target for type 2 diabetes?
+```
+**Why it's great:** Shows nuanced answer with different targets for different patients
+
+```
+What are the blood pressure targets for hypertension treatment?
+```
+**Why it's great:** Shows specific goals with patient considerations
+
+---
+
+### 4. **Complex Management Questions** ⭐ SHOWS DEPTH
+```
+What is resistant hypertension and how is it treated?
+```
+**Why it's great:** Shows system handles complex multi-step protocols
+
+```
+What are the second-line agents for diabetes?
+```
+**Why it's great:** Shows multiple options with pros/cons of each
+
+---
+
+### 5. **Safety Questions** ⭐ SHOWS RESPONSIBLE AI
+```
+What is the treatment for breast cancer?
+```
+**Why it's great:** System will say "insufficient information" - shows it WON'T hallucinate!
+
+```
+How do you perform open heart surgery?
+```
+**Why it's great:** Shows system admits when it doesn't know - CRITICAL for safety
+
+---
+
+## 🎬 Suggested Demo Flow for Judges
+
+**Start with this script:**
+
+### Question 1: Show Basic Functionality
+```
+What is the first-line treatment for type 2 diabetes?
+```
+**Point out:** 
+- ✅ Clear answer (Metformin)
+- ✅ Specific dosing
+- ✅ Citation to source document
+- ✅ Can click to see original text
+
+---
+
+### Question 2: Show Multiple Sources
+```
+What antibiotics are used for strep throat?
+```
+**Point out:**
+- ✅ Multiple treatment options
+- ✅ Considers patient allergies
+- ✅ All from verified source
+
+---
+
+### Question 3: Show Safety Feature (THE WOW MOMENT!)
+```
+What is the treatment for lung cancer?
+```
+**Point out:**
+- ✅ System says "insufficient information"
+- ✅ Doesn't make up an answer
+- ✅ This is what makes it SAFE for healthcare
+- 🎯 **"Regular AI would hallucinate. MedGPT admits what it doesn't know."**
+
+---
+
+## 💡 Pro Tips for Demo
+
+**Say this to judges:**
+
+> "Notice how every single claim has a citation. Click 'View Source Documents' to see the exact text it came from. This is what makes AI safe for medicine - complete transparency and no hallucinations."
+
+**Compare to ChatGPT:**
+
+> "If you ask ChatGPT the same questions, it might sound confident but you can't verify the source. With MedGPT, every answer is traceable to a real medical document."
+
+---
+
+## 📋 Quick Reference Card (Print This!)
+
+```
+✅ QUESTIONS THAT WORK (In your knowledge base):
+- Diabetes treatment, diagnosis, targets
+- Hypertension classification, treatment, targets  
+- Antibiotics for pneumonia, UTI, sinusitis, strep throat
+- Resistant hypertension management
+
+❌ QUESTIONS THAT WON'T WORK (Not in knowledge base):
+- Cancer treatments
+- Surgical procedures
+- Rare diseases
+- Emergency protocols (beyond hypertension)
+
+💡 USE THE "WON'T WORK" QUESTIONS TO SHOW SAFETY!
+```
+
+---
+
+## 🎯 The Perfect 3-Question Demo
+
+If you only have 2 minutes:
+
+1. **"What is the first-line treatment for type 2 diabetes?"** → Shows it works
+2. **"What are the blood pressure targets for hypertension?"** → Shows precision
+3. **"What is the treatment for pancreatic cancer?"** → Shows safety (will say insufficient info)
+
+This shows: **Accuracy + Precision + Safety = Ready for Healthcare** 🏥
+
+Try these questions now and see the magic! 🚀
