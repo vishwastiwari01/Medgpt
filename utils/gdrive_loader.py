@@ -129,9 +129,9 @@ def download_vectorstore_from_gdrive(
         3. ✅ ZIP contains `index.faiss` and `index.pkl`
         
         **To create the ZIP:**
-        ```bash
+```bash
         zip -r vectorstore.zip vectorstore/
-        ```
+```
         """)
         
         raise
@@ -146,21 +146,30 @@ def get_gdrive_file_id():
     2. Environment variable (for local testing)
     3. Hardcoded fallback
     """
+    file_id = None
+    source = None
+    
     # Try Streamlit secrets first (for cloud deployment)
     try:
         file_id = st.secrets.get("GDRIVE_VECTORSTORE_ZIP_ID")
         if file_id:
-            return file_id
-    except:
-        pass
+            source = "Streamlit Secrets"
+            print(f"✓ Found file ID in Streamlit Secrets")
+    except Exception as e:
+        print(f"⚠️ Could not read Streamlit secrets: {e}")
     
     # Try environment variable
-    file_id = os.getenv("GDRIVE_VECTORSTORE_ZIP_ID")
-    if file_id:
-        return file_id
+    if not file_id:
+        file_id = os.getenv("GDRIVE_VECTORSTORE_ZIP_ID")
+        if file_id:
+            source = "Environment Variable"
+            print(f"✓ Found file ID in Environment Variable")
     
-    # Fallback - you can hardcode it here
-    file_id = None  # TODO: Add your ZIP file ID here
+    # Hardcoded fallback (temporary for debugging)
+    if not file_id:
+        file_id = "1ig2qdAZEd2jcsNtBIfMquUPduhVaZSmj"  # Your ZIP file ID
+        source = "Hardcoded Fallback"
+        print(f"⚠️ Using hardcoded file ID (fallback)")
     
     if not file_id:
         raise ValueError(
@@ -171,4 +180,5 @@ def get_gdrive_file_id():
             "- Or hardcode it in gdrive_loader.py"
         )
     
+    print(f"Using file ID from: {source}")
     return file_id
