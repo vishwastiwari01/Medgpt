@@ -18,12 +18,9 @@ class LLMHandler:
         if groq_key:
             try:
                 from groq import Groq
-                # ✅ FIXED: Use correct base URL
-                self.groq_client = Groq(
-                    api_key=groq_key,
-                    base_url="https://api.groq.com"  # Without /openai/v1
-                )
-                # Test connection
+                # Use default base URL (don't override)
+                self.groq_client = Groq(api_key=groq_key)
+                # Test connection with NEW model
                 self.groq_client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=[{"role": "user", "content": "test"}],
@@ -31,7 +28,7 @@ class LLMHandler:
                 )
                 self.backend = "groq"
                 self.model = "llama-3.3-70b-versatile"
-                print("✅ Groq connected: llama-3.1-70b-versatile")
+                print("✅ Groq connected: llama-3.3-70b-versatile")
                 return
             except Exception as e:
                 print(f"⚠️ Groq init failed: {e}")
@@ -195,18 +192,14 @@ def pick_groq_model() -> str:
     if groq_key:
         try:
             from groq import Groq
-            # ✅ FIXED: Use correct base URL
-            client = Groq(
-                api_key=groq_key,
-                base_url="https://api.groq.com"
-            )
-            # Test with best model
+            client = Groq(api_key=groq_key)
+            # Test with NEW model
             client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
+                model="llama-3.3-70b-versatile",
                 messages=[{"role": "user", "content": "test"}],
                 max_tokens=5
             )
-            return "llama-3.1-70b-versatile"
+            return "llama-3.3-70b-versatile"
         except:
             pass
     return "not configured"
