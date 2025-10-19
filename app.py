@@ -29,7 +29,7 @@ from langchain_community.vectorstores import FAISS
 # Project utils
 from upload_handler import render_upload_ui
 from utils.llm_handler import LLMHandler
-from utils.gdrive_loader import download_vectorstore_from_gdrive, get_gdrive_folder_id
+from utils.gdrive_loader import download_vectorstore_from_gdrive, get_gdrive_file_id
 
 # Constants
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"

@@ -1,23 +1,24 @@
 """
-Google Drive Vectorstore Loader
-Downloads FAISS vectorstore from Google Drive on deployment
+Google Drive Vectorstore Loader - ZIP Method (More Reliable)
+Downloads FAISS vectorstore ZIP from Google Drive on deployment
 """
 import os
 import gdown
 import zipfile
 from pathlib import Path
 import streamlit as st
+import shutil
 
 def download_vectorstore_from_gdrive(
-    folder_id: str,
+    file_id: str,
     output_dir: str = "vectorstore",
     force_download: bool = False
 ):
     """
-    Download vectorstore from Google Drive
+    Download vectorstore ZIP from Google Drive and extract
     
     Args:
-        folder_id: Google Drive folder ID (from sharing link)
+        file_id: Google Drive file ID (from sharing link of ZIP file)
         output_dir: Local directory to save vectorstore
         force_download: Force re-download even if exists
     
@@ -26,91 +27,119 @@ def download_vectorstore_from_gdrive(
     """
     output_path = Path(output_dir)
     
-    # Check if already downloaded
+    # Check if already downloaded and valid
     if output_path.exists() and not force_download:
-        # Verify it has the required FAISS files
         required_files = ['index.faiss', 'index.pkl']
         has_all_files = all((output_path / f).exists() for f in required_files)
         
         if has_all_files:
             print(f"✅ Vectorstore already exists at {output_path}")
             return str(output_path)
+        else:
+            print(f"⚠️ Vectorstore incomplete, re-downloading...")
+            shutil.rmtree(output_path)
     
     print(f"📥 Downloading vectorstore from Google Drive...")
-    print(f"   Folder ID: {folder_id}")
+    print(f"   File ID: {file_id}")
     
     try:
         # Create temp directory
-        temp_dir = Path("temp_download")
+        temp_dir = Path("temp_vectorstore_download")
         temp_dir.mkdir(exist_ok=True)
         
-        # Download as zip (easier than folder download)
         zip_path = temp_dir / "vectorstore.zip"
         
-        # Google Drive folder download URL
-        url = f"https://drive.google.com/uc?id={folder_id}"
+        # Download ZIP file
+        url = f"https://drive.google.com/uc?id={file_id}"
         
-        # Try to download
-        print("   Downloading...")
-        gdown.download(url, str(zip_path), quiet=False, fuzzy=True)
+        print("   Downloading ZIP file...")
+        gdown.download(url, str(zip_path), quiet=False)
         
-        # If that didn't work, try folder download
-        if not zip_path.exists() or zip_path.stat().st_size < 1000:
-            print("   Trying alternative download method...")
-            gdown.download_folder(
-                id=folder_id,
-                output=str(temp_dir / "vectorstore"),
-                quiet=False
-            )
-            
-            # Move files to output directory
-            output_path.mkdir(parents=True, exist_ok=True)
-            src_dir = temp_dir / "vectorstore"
-            
-            if src_dir.exists():
-                for item in src_dir.iterdir():
+        # Verify download
+        if not zip_path.exists():
+            raise Exception("Download failed - ZIP file not found")
+        
+        file_size_mb = zip_path.stat().st_size / (1024 * 1024)
+        print(f"   ✓ Downloaded {file_size_mb:.2f} MB")
+        
+        if file_size_mb < 0.1:
+            raise Exception("Downloaded file is too small - check sharing permissions")
+        
+        # Extract ZIP
+        print("   Extracting ZIP file...")
+        output_path.mkdir(parents=True, exist_ok=True)
+        
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(temp_dir)
+        
+        # Move files to correct location
+        # Handle case where ZIP contains a folder or files directly
+        extracted_items = list(temp_dir.iterdir())
+        vectorstore_folder = None
+        
+        # Find the vectorstore folder in extracted items
+        for item in extracted_items:
+            if item.is_dir() and item.name == 'vectorstore':
+                vectorstore_folder = item
+                break
+        
+        if vectorstore_folder:
+            # Move contents of vectorstore folder
+            for item in vectorstore_folder.iterdir():
+                dest = output_path / item.name
+                if dest.exists():
+                    if dest.is_dir():
+                        shutil.rmtree(dest)
+                    else:
+                        dest.unlink()
+                shutil.move(str(item), str(dest))
+        else:
+            # Files are directly in temp_dir
+            for item in extracted_items:
+                if item.suffix in ['.faiss', '.pkl'] or item.name in ['index.faiss', 'index.pkl']:
                     dest = output_path / item.name
-                    if item.is_file():
-                        item.replace(dest)
-                print(f"   ✅ Vectorstore downloaded to {output_path}")
-                return str(output_path)
+                    if dest.exists():
+                        dest.unlink()
+                    shutil.move(str(item), str(dest))
         
-        # Extract zip if we downloaded one
-        if zip_path.exists() and zip_path.stat().st_size > 1000:
-            print("   Extracting...")
-            output_path.mkdir(parents=True, exist_ok=True)
-            
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(output_path)
-            
-            print(f"   ✅ Vectorstore extracted to {output_path}")
-            
-            # Cleanup
-            zip_path.unlink()
-            
-            return str(output_path)
+        # Verify extraction
+        required_files = ['index.faiss', 'index.pkl']
+        missing_files = [f for f in required_files if not (output_path / f).exists()]
         
-        raise Exception("Download failed - file too small or not found")
+        if missing_files:
+            raise Exception(f"Missing required files after extraction: {missing_files}")
+        
+        print(f"   ✅ Vectorstore extracted to {output_path}")
+        
+        # Cleanup
+        shutil.rmtree(temp_dir)
+        
+        return str(output_path)
         
     except Exception as e:
         error_msg = f"❌ Error downloading vectorstore: {e}"
         print(error_msg)
         
-        # Show helpful error message
+        # Show helpful error message in Streamlit
         st.error(error_msg)
         st.error("Please check:")
         st.markdown("""
-        1. ✅ Folder is shared as "Anyone with the link"
-        2. ✅ Folder ID is correct
-        3. ✅ Folder contains `index.faiss` and `index.pkl`
+        1. ✅ ZIP file is shared as "Anyone with the link"
+        2. ✅ File ID is correct (from the ZIP file, not folder)
+        3. ✅ ZIP contains `index.faiss` and `index.pkl`
+        
+        **To create the ZIP:**
+        ```bash
+        zip -r vectorstore.zip vectorstore/
+        ```
         """)
         
         raise
 
 
-def get_gdrive_folder_id():
+def get_gdrive_file_id():
     """
-    Get Google Drive folder ID from environment or secrets
+    Get Google Drive file ID from environment or secrets
     
     Priority:
     1. Streamlit secrets (for deployment)
@@ -119,28 +148,27 @@ def get_gdrive_folder_id():
     """
     # Try Streamlit secrets first (for cloud deployment)
     try:
-        folder_id = st.secrets.get("GDRIVE_VECTORSTORE_ID")
-        if folder_id:
-            return folder_id
+        file_id = st.secrets.get("GDRIVE_VECTORSTORE_ZIP_ID")
+        if file_id:
+            return file_id
     except:
         pass
     
     # Try environment variable
-    folder_id = os.getenv("GDRIVE_VECTORSTORE_ID")
-    if folder_id:
-        return folder_id
+    file_id = os.getenv("GDRIVE_VECTORSTORE_ZIP_ID")
+    if file_id:
+        return file_id
     
-    # Fallback - you can hardcode it here for simplicity
-    # Replace this with your actual folder ID
-    folder_id = None  # TODO: Add your folder ID here
+    # Fallback - you can hardcode it here
+    file_id = None  # TODO: Add your ZIP file ID here
     
-    if not folder_id:
+    if not file_id:
         raise ValueError(
-            "Google Drive folder ID not found!\n"
-            "Please set GDRIVE_VECTORSTORE_ID in:\n"
+            "Google Drive ZIP file ID not found!\n"
+            "Please set GDRIVE_VECTORSTORE_ZIP_ID in:\n"
             "- Streamlit secrets (for deployment)\n"
             "- Environment variable (for local testing)\n"
             "- Or hardcode it in gdrive_loader.py"
         )
     
-    return folder_id
+    return file_id
