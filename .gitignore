@@ -1,0 +1,30 @@
+# Virtual Environment - MUST BE EXCLUDED
+.venv/
+venv/
+env/
+ENV/
+
+# Environment variables
+.env
+
+# Large documents (optional - remove if you want to keep small PDFs)
+documents/*.pdf
+*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vectorstore (if too large)
+# vectorstore/
