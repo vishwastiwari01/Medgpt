@@ -2,6 +2,7 @@
 MedGPT - Professional Medical RAG Assistant
 Polished UI with better colors and UX
 FIXED: PDF Preview & Fallback Issues
+WITH: Google Drive Vectorstore Download
 """
 
 import os
@@ -28,6 +29,7 @@ from langchain_community.vectorstores import FAISS
 # Project utils
 from upload_handler import render_upload_ui
 from utils.llm_handler import LLMHandler
+from utils.gdrive_loader import download_vectorstore_from_gdrive, get_gdrive_folder_id
 
 # Constants
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
@@ -216,12 +218,33 @@ footer {visibility: hidden;}
 # Cached resources
 @st.cache_resource(show_spinner=False)
 def load_vectorstore():
+    """Load vectorstore - downloads from Google Drive if not present"""
     path = Path(VECTORSTORE_DIR)
+    
+    # If vectorstore doesn't exist locally, download from Google Drive
     if not path.exists():
-        st.error("❌ Knowledge base not found")
+        with st.spinner("📥 Downloading knowledge base from cloud..."):
+            try:
+                folder_id = get_gdrive_folder_id()
+                download_vectorstore_from_gdrive(folder_id, str(path))
+            except Exception as e:
+                st.error(f"❌ Failed to download vectorstore: {e}")
+                st.info("💡 This is expected on first deployment. The vectorstore will be downloaded automatically.")
+                st.stop()
+    
+    # Verify required files exist
+    required_files = ['index.faiss', 'index.pkl']
+    missing_files = [f for f in required_files if not (path / f).exists()]
+    
+    if missing_files:
+        st.error(f"❌ Vectorstore incomplete. Missing files: {missing_files}")
+        st.info("Try deleting the vectorstore folder and restarting the app.")
         st.stop()
+    
+    # Load the vectorstore
     emb = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
     vs = FAISS.load_local(str(path), emb, allow_dangerous_deserialization=True)
+    
     return vs
 
 @st.cache_resource(show_spinner=False)
