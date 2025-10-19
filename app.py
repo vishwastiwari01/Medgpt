@@ -1,12 +1,14 @@
 """
 MedGPT - Professional Medical RAG Assistant
 Polished UI with better colors and UX
+FIXED: PDF Preview & Fallback Issues
 """
 
 import os
 import time
 from pathlib import Path
 import sys
+import base64  # ADDED: For PDF preview fix
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
@@ -231,9 +233,40 @@ def get_retriever():
 def get_llm_handler():
     return LLMHandler()
 
-# PDF preview - scrollable single page view
+# FIXED: PDF preview with base64 encoding
+def display_pdf_base64(pdf_path, page_num=None):
+    """Display PDF using base64 encoding - works reliably in browsers"""
+    try:
+        with open(pdf_path, 'rb') as f:
+            pdf_bytes = f.read()
+        
+        # Convert to base64
+        base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
+        
+        # Create iframe
+        pdf_html = f'''
+            <iframe 
+                src="data:application/pdf;base64,{base64_pdf}#page={page_num+1 if page_num is not None else 1}" 
+                width="100%" 
+                height="800px" 
+                type="application/pdf"
+                style="border: 1px solid #e5e7eb; border-radius: 8px;">
+                <p>Your browser does not support inline PDF viewing. 
+                   <a href="data:application/pdf;base64,{base64_pdf}" download>Download PDF</a>
+                </p>
+            </iframe>
+        '''
+        
+        st.markdown(pdf_html, unsafe_allow_html=True)
+        return True
+        
+    except Exception as e:
+        st.error(f"Error displaying PDF: {e}")
+        return False
+
+# PDF preview - scrollable single page view (IMPROVED)
 def display_pdf_page_scrollable(pdf_path, page_num, highlight_text=None):
-    """Display single PDF page in scrollable container"""
+    """Display single PDF page in scrollable container with fallback to base64"""
     doc = None
     try:
         doc = fitz.open(pdf_path)
@@ -274,11 +307,15 @@ def display_pdf_page_scrollable(pdf_path, page_num, highlight_text=None):
                 st.session_state.current_page = page_num + 1
                 st.rerun()
         
+        doc.close()
+        return True
+        
     except Exception as e:
-        st.error(f"Error: {e}")
-    finally:
+        # Fallback to base64 display
         if doc:
             doc.close()
+        st.warning(f"PyMuPDF rendering failed, using alternative viewer...")
+        return display_pdf_base64(pdf_path, page_num)
 
 # Session state
 if "chat_history" not in st.session_state:
@@ -428,7 +465,7 @@ with right:
         if file_path and Path(file_path).exists() and file_path.lower().endswith(".pdf"):
             display_pdf_page_scrollable(file_path, page, content[:120])
         else:
-            st.info("PDF preview not available")
+            st.info("📄 PDF preview not available - file path not found")
     else:
         st.markdown("""
         <div class="empty-state">
@@ -438,7 +475,7 @@ with right:
         </div>
         """, unsafe_allow_html=True)
 
-# SIDEBAR
+# SIDEBAR - FIXED: No more "fallback" display
 with st.sidebar:
     st.markdown("## 📤 Upload Files")
     render_upload_ui()
@@ -450,12 +487,24 @@ with st.sidebar:
     handler = get_llm_handler()
     status = handler.get_status()
     
-    if status["backend"] == "groq":
-        st.success(f"✓ Groq • {status.get('model', '')[:20]}")
-    elif status["backend"] == "ollama":
-        st.info(f"✓ Ollama • {status.get('model', '')[:20]}")
+    backend = status.get("backend", "unknown")
+    model_name = status.get("model", "Unknown")
+    
+    # FIXED: Better status display without "fallback" confusion
+    if backend == "groq":
+        st.success(f"✓ **Groq API**")
+        st.caption(f"Model: {model_name}")
+    elif backend == "ollama":
+        st.info(f"✓ **Ollama Local**")
+        st.caption(f"Model: {model_name}")
+    elif backend == "openai":
+        st.success(f"✓ **OpenAI API**")
+        st.caption(f"Model: {model_name}")
     else:
-        st.warning("⚠️ Fallback mode")
+        # If truly fallback/offline mode
+        st.warning(f"⚠️ **Limited Mode**")
+        st.caption("Using basic responses")
+        st.caption("Check your API keys for full functionality")
     
     st.markdown("---")
     
