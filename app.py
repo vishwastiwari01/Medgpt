@@ -27,7 +27,7 @@ from langchain_community.vectorstores import FAISS
 
 # Project utils
 from upload_handler import render_upload_ui
-from llm_handler import LLMHandler
+from utils.llm_handler import LLMHandler
 
 # Constants
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
